@@ -43,7 +43,8 @@ body {
 }
 
 #netlabel,
-#passlabel {
+#passlabel,
+#userlabel {
   box-sizing: border-box;
   color: rgba(0, 0, 0, 0.87);
   display: block;
@@ -70,11 +71,14 @@ body {
   font-size: 1.0em;
 }
 
-#passwrap {
+#passwrap,
+#peapuserwrap {
   margin-bottom: 0.7em;
+  display: none;
 }
 
-#password {
+#password,
+#puser {
   box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px inset;
   cursor: auto;
   vertical-align: top;
@@ -115,6 +119,7 @@ body {
   height: 4em;
   background: rgb(33, 133, 208) none repeat scroll 0% 0% / auto padding-box border-box;
   border: 0px none rgb(255, 255, 255);
+  margin-top: 10px;
 }
 
 pre {

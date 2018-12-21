@@ -1,5 +1,5 @@
 var WiFiPortal = {
-
+    SSIDs:[],
     _msg_proto: function (elID) {
         return {
             $el: document.getElementById(elID),
@@ -16,6 +16,7 @@ var WiFiPortal = {
         WiFiPortal.Buttons.init();
         WiFiPortal.Info = new WiFiPortal._msg_proto( "info" );
         WiFiPortal.Error = new WiFiPortal._msg_proto( "error" );
+        document.getElementById("networks").onchange = function(){WiFiPortal.selectNetwork()};
        
         WiFiPortal.check( function(resp){
 
@@ -220,6 +221,7 @@ var WiFiPortal = {
     save: function(){
         var ssid = document.getElementById('networks').value;
         var password = document.getElementById('password').value;
+        var user = document.getElementById('puser').value;
         
         if( ! ssid || ssid.length < 1 ){
             WiFiPortal.Info.hide();
@@ -231,7 +233,7 @@ var WiFiPortal = {
 
         WiFiPortal.Test.ssid = ssid; // Set SSID value in test so we can verify connection is to that exact SSID
 
-        WiFiPortal.rpcCall('POST', 'WiFi.PortalSave', 'Sending credentials to device to test...', { ssid: ssid, pass: password } , function( resp ){
+        WiFiPortal.rpcCall('POST', 'WiFi.PortalSave', 'Sending credentials to device to test...', { ssid: ssid, pass: password, user: user } , function( resp ){
             // True means we received a response, but no data
             if( resp && resp !== true && resp.result !== undefined ){
 
@@ -262,17 +264,16 @@ var WiFiPortal = {
                 var netSelect = document.getElementById("networks");
                 netSelect.removeAttribute("disabled"); // Remove disabled (on page load)
                 netSelect.innerHTML = '<option value="-1" disabled="disabled" selected="selected">Please select an SSID...</option>'; // clear any existing ones
-                var SSIDs = [];
 
                 resp.forEach(function (net) {
-                    if( SSIDs.indexOf( net.ssid ) > -1 ){
+                    if( WiFiPortal.SSIDs.indexOf( net.ssid ) > -1 ){
                         return; // prevent adding dupe SSIDs as all we send is the SSID to connect to
                     }
                     var opt = document.createElement('option');
                     opt.innerHTML = net.ssid + " (" + net.bssid + ") - " + WiFiPortal.rssiToStrength(net.rssi) + "% / " + net.rssi;
                     opt.value = net.ssid;
                     netSelect.appendChild(opt);
-                    SSIDs.push(net.ssid);
+                    WiFiPortal.SSIDs.push(net);
                 });
 
                 WiFiPortal.Info.show("Please select from one of the " + resp.length + " WiFi networks found.");
@@ -358,6 +359,22 @@ var WiFiPortal = {
                 cls = 'null';
             }
             return '<span class="' + cls + '">' + match + '</span>';
+        });
+    },
+    selectNetwork:function(){
+        var passField = document.getElementById("passwrap");
+        var userField = document.getElementById("peapuserwrap");
+        var Networks = document.getElementById("networks");
+        WiFiPortal.SSIDs.forEach(function (net) {
+            if( net.ssid ===  Networks.value){
+                if(net.auth === 5){
+                    userField.style.display = "block";
+                    passField.style.display = "block";
+                } else {
+                    userField.style.display = "none";
+                    passField.style.display = "block";
+                }
+            }
         });
     }
 };
