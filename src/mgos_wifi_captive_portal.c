@@ -37,6 +37,7 @@ static const char *s_portal_hostname = "setup.device.local";
 static const char *s_listening_addr = "udp://:53";
 static char *s_test_ssid = NULL;
 static char *s_test_pass = NULL;
+static char *s_test_user = NULL;
 
 static int s_serve_gzip;
 static int s_connection_retries = 0;
@@ -261,9 +262,10 @@ static void mgos_wifi_captive_portal_save_rpc_handler(struct mg_rpc_request_info
                                                       struct mg_rpc_frame_info *fi,
                                                       struct mg_str args){
 
-    LOG(LL_INFO, ("WiFi.PortalSave RPC Handler Parsing JSON") );
+    // LOG(LL_INFO, ("WiFi.PortalSave RPC Handler Parsing JSON") );
+    printf("WiFi.PortalSave RPC Handler Parsing JSON: %.*s\n", args.len, args.p);
 
-    json_scanf(args.p, args.len, ri->args_fmt, &s_test_ssid, &s_test_pass );
+    json_scanf(args.p, args.len, ri->args_fmt, &s_test_ssid, &s_test_pass, &s_test_user );
 
     if (mgos_conf_str_empty(s_test_ssid)){
         mg_rpc_send_errorf(ri, 400, "SSID is required!" );
@@ -279,6 +281,14 @@ static void mgos_wifi_captive_portal_save_rpc_handler(struct mg_rpc_request_info
     sp_test_sta_vals->ssid = s_test_ssid;
     sp_test_sta_vals->pass = s_test_pass;
 
+    if (!mgos_conf_str_empty(s_test_user)){
+        printf("WiFi.PortalSave PEAP user: %s\n", s_test_user);
+
+        sp_test_sta_vals->user = s_test_user;
+        sp_test_sta_vals->anon_identity = s_test_user;
+        sp_test_sta_vals->ca_cert = "";
+    }
+
     // Make sure to remove any existing handlers (in case of previous RPC call)
     remove_event_handlers();
 
@@ -286,7 +296,7 @@ static void mgos_wifi_captive_portal_save_rpc_handler(struct mg_rpc_request_info
         s_connect_timer_id = mgos_set_timer(30000, 0, sta_connect_timeout_timer_cb, NULL);
     }
 
-    LOG(LL_INFO, ("WiFi.PortalSave RPC Handler ssid: %s pass: %s", s_test_ssid, s_test_pass));
+    LOG(LL_INFO, ("WiFi.PortalSave RPC Handler ssid: %s pass: %s user: %s", s_test_ssid, s_test_pass, s_test_user));
 
     mgos_wifi_disconnect();
     bool result = mgos_wifi_setup_sta(sp_test_sta_vals);
@@ -385,7 +395,7 @@ bool mgos_wifi_captive_portal_init_rpc(void){
     if( ! s_captive_portal_rpc_init ){
         // Add RPC
         struct mg_rpc *c = mgos_rpc_get_global();
-        mg_rpc_add_handler(c, "WiFi.PortalSave", "{ssid: %Q, pass: %Q}", mgos_wifi_captive_portal_save_rpc_handler, NULL);
+        mg_rpc_add_handler(c, "WiFi.PortalSave", "{ssid: %Q, pass: %Q, user:%Q}", mgos_wifi_captive_portal_save_rpc_handler, NULL);
         s_captive_portal_rpc_init = true;
         return true;
     }
