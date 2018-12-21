@@ -120,7 +120,7 @@ static void ip_aquired_cb(int ev, void *ev_data, void *userdata){
     // struct mgos_config_wifi_sta *sta = (struct mgos_config_wifi_sta *) sp_test_sta_vals;
 
     mgos_event_trigger(MGOS_WIFI_CAPTIVE_PORTAL_TEST_SUCCESS, sp_test_sta_vals);
-    LOG(LL_INFO, ("Wifi Captive Portal IP Aquired from SSID %s", connectedto ) );
+    LOG(LL_INFO, ("Wifi Captive Portal IP Acquired from SSID %s", connectedto ) );
     free(connectedto);
 
     // Clear timeout timer on IP Aquired
@@ -132,6 +132,12 @@ static void ip_aquired_cb(int ev, void *ev_data, void *userdata){
         mgos_sys_config_set_wifi_sta_enable(true);
         mgos_sys_config_set_wifi_sta_ssid(sp_test_sta_vals->ssid);
         mgos_sys_config_set_wifi_sta_pass(sp_test_sta_vals->pass);
+
+        if (!mgos_conf_str_empty(sp_test_sta_vals->user)){
+            mgos_sys_config_set_wifi_sta_user(sp_test_sta_vals->user);
+            mgos_sys_config_set_wifi_sta_anon_identity(sp_test_sta_vals->user);
+            mgos_sys_config_set_wifi_sta_ca_cert("");
+        }
 
         int disable = mgos_sys_config_get_portal_wifi_disable();
         if ( disable == 1 || disable == 2 ){
@@ -262,8 +268,7 @@ static void mgos_wifi_captive_portal_save_rpc_handler(struct mg_rpc_request_info
                                                       struct mg_rpc_frame_info *fi,
                                                       struct mg_str args){
 
-    // LOG(LL_INFO, ("WiFi.PortalSave RPC Handler Parsing JSON") );
-    printf("WiFi.PortalSave RPC Handler Parsing JSON: %.*s\n", args.len, args.p);
+    LOG(LL_INFO, ("WiFi.PortalSave RPC Handler Parsing JSON: %.*s\n", args.len, args.p) );
 
     json_scanf(args.p, args.len, ri->args_fmt, &s_test_ssid, &s_test_pass, &s_test_user );
 
@@ -282,8 +287,6 @@ static void mgos_wifi_captive_portal_save_rpc_handler(struct mg_rpc_request_info
     sp_test_sta_vals->pass = s_test_pass;
 
     if (!mgos_conf_str_empty(s_test_user)){
-        printf("WiFi.PortalSave PEAP user: %s\n", s_test_user);
-
         sp_test_sta_vals->user = s_test_user;
         sp_test_sta_vals->anon_identity = s_test_user;
         sp_test_sta_vals->ca_cert = "";
