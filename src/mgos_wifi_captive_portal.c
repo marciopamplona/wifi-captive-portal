@@ -137,6 +137,10 @@ static void ip_aquired_cb(int ev, void *ev_data, void *userdata){
             mgos_sys_config_set_wifi_sta_user(sp_test_sta_vals->user);
             mgos_sys_config_set_wifi_sta_anon_identity(sp_test_sta_vals->user);
             mgos_sys_config_set_wifi_sta_ca_cert("");
+        } else {
+            mgos_sys_config_set_wifi_sta_user("");
+            mgos_sys_config_set_wifi_sta_anon_identity("");
+            mgos_sys_config_set_wifi_sta_ca_cert("");
         }
 
         int disable = mgos_sys_config_get_portal_wifi_disable();
@@ -289,6 +293,10 @@ static void mgos_wifi_captive_portal_save_rpc_handler(struct mg_rpc_request_info
     if (!mgos_conf_str_empty(s_test_user)){
         sp_test_sta_vals->user = s_test_user;
         sp_test_sta_vals->anon_identity = s_test_user;
+        sp_test_sta_vals->ca_cert = "";
+    } else {
+        sp_test_sta_vals->user = "";
+        sp_test_sta_vals->anon_identity = "";
         sp_test_sta_vals->ca_cert = "";
     }
 
